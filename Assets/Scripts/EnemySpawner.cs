@@ -1,47 +1,84 @@
 using System;
 using System.Collections.Generic;
+using Enemy;
 using Pool;
 using UnityEngine;
+using Zenject;
 
-public class EnemySpawner : MonoBehaviour
+namespace RoomEvents
 {
-    [Tooltip("Enemy spawn positions")]
-    [SerializeField] private List<GameObject> positions = new();
-    
-    private ObjectPool objectPool;
-    
-    private void Start()
+    [RequireComponent(typeof(GameObject))]
+    public class EnemySpawner : MonoBehaviour
     {
-        objectPool = ObjectPool.Instance;
-    }
+        public static event Action OnRoomCleared;
 
-    private void SpawnEnemy()
-    {
-        foreach (GameObject position in positions)
+        [SerializeField] private ObjectPool objectPool;
+        [SerializeField] private EnemyBehavior enemyBehavior;
+
+        [Tooltip("Enemy spawn positions")]
+        [SerializeField] private List<GameObject> positions = new();
+        [SerializeField] private float spawnDelay = 1f;
+        
+        [SerializeField] private int enemyCount;
+        
+        [Inject] private void Construct(EnemyBehavior enemy) => enemyBehavior = enemy;
+
+        private void Start()
         {
-            objectPool.SpawnFromPool("EnemyPool",
-                position.transform.position, Quaternion.identity);
+            enemyBehavior.OnDied += OnEnemyValueChanged;
             
-            Debug.Log("Enemy has been spawned at: " 
-                      + position.transform.position + " position");
+            objectPool = ObjectPool.Instance;
         }
-    }
-    
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.CompareTag("Player"))
-        {
-            Invoke(nameof(SpawnEnemy), 0.5f);
-            Debug.Log("Player has been spoted");
-        }
-    }
 
-    private void OnDrawGizmosSelected()
-    {
-        foreach (GameObject position in positions)
+        private void SpawnEnemy()
         {
-            Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(position.transform.position,3f);
+            foreach (GameObject position in positions)
+            {
+                ++enemyCount;
+                
+                objectPool.SpawnFromPool("EnemyPool",
+                    position.transform.position, Quaternion.identity);
+            }
+            print("Number of spawned enemies: " + enemyCount);
+        }
+
+        private void OnEnemyValueChanged()
+        {
+            --enemyCount;
+            print("Enemy count " + enemyCount);
+            
+            CheckEnemyState();
+        }
+        
+        private void CheckEnemyState()
+        {
+            if (enemyCount <= 0)
+            {
+                OnRoomCleared?.Invoke();
+                enemyBehavior.OnDied -= OnEnemyValueChanged;
+            }
+        }
+
+        private void CheckPlayerCollision(Collider other)
+        {
+            if (!other.CompareTag("Player"))
+            {
+                return;
+            }
+            
+            DisableTriggerZone();
+            Invoke(nameof(SpawnEnemy), spawnDelay);
+        }
+
+        private void DisableTriggerZone()
+        {
+            //Disables collider so it wouldn't activate twice
+            GetComponent<Collider>().enabled = false;
+        }
+
+        private void OnTriggerEnter(Collider other)
+        {
+            CheckPlayerCollision(other);
         }
     }
 }

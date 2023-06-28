@@ -1,5 +1,6 @@
 using Player;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.VFX;
 using Zenject;
 
@@ -8,7 +9,8 @@ namespace Enemy
     public class EnemyAnimations : MonoBehaviour, IAnimation
     {
         [SerializeField] private Animator enemyAnimator;
-        [SerializeField] private AIManager manager;
+        [FormerlySerializedAs("manager")]
+        [SerializeField] private AIManager aiManager;
         [SerializeField] private VisualEffect bloodBurst;
         [SerializeField] private Transform player;
         
@@ -16,9 +18,9 @@ namespace Enemy
         private bool facingRight = false;
 
         [Inject]
-        public void Construct(PlayerBehavior _playerTransform)
+        public void Construct(PlayerBehavior playerTransform)
         {
-            player = _playerTransform.transform;
+            player = playerTransform.transform;
         }
 
         private void Update()
@@ -28,7 +30,7 @@ namespace Enemy
 
         public void PlayAttackAnimation()
         {
-            if (manager.enemyIsAttacking)
+            if (aiManager.EnemyIsAttacking)
             {
                 enemyAnimator.SetTrigger("Attack");
             }
@@ -58,17 +60,10 @@ namespace Enemy
 
         public void PlayRunAnimation()
         {
-            if (manager.enemyIsMoving)
-            {
-                enemyAnimator.SetInteger("AnimState", 2);
-            }
-            else
-            {
-                enemyAnimator.SetInteger("AnimState", 1);
-            }
+            enemyAnimator.SetInteger("AnimState", aiManager.EnemyIsMoving ? 2 : 1);
         }
 
-        void Facing()
+        private void Facing()
         {
             if (isDead) return;
             if (player.position.x > transform.position.x && !facingRight)
@@ -85,7 +80,7 @@ namespace Enemy
             }
         }
 
-        void Flip()
+        private void Flip()
         {
             // Switch the way the player is labelled as facing
             facingRight = !facingRight;

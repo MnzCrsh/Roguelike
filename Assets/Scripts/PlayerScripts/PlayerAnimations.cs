@@ -3,6 +3,7 @@ using UnityEngine.VFX;
 
 namespace Player
 {
+    [RequireComponent(typeof(Animator))]
     public class PlayerAnimations : MonoBehaviour, IAnimation
     {
         [SerializeField] private PlayerController controller;
@@ -23,7 +24,7 @@ namespace Player
 
         public void PlayAttackAnimation()
         {
-            if (combat.playerIsAttacking)
+            if (combat.PlayerIsAttacking)
             {
                 playerAnimator.SetTrigger("Attack");
             }
@@ -52,7 +53,7 @@ namespace Player
 
         public void PlayRunAnimation()
         {
-            if (controller.playerIsMoving)
+            if (controller.PlayerIsMoving)
             {
                 playerAnimator.SetInteger("AnimState", 2);
             }

@@ -1,10 +1,9 @@
-using System;
 using Player;
 using UnityEngine;
 using UnityEngine.AI;
 using Zenject;
 
-  //TODO: Move enemy stats to ScriptableObject
+  //TODO: Move enemy stats to the new ScriptableObject
   //TODO: Move NavMeshAgent to EnemyBehavior
   //TODO: Move methods update to EnemyBehavior
 
@@ -12,16 +11,21 @@ namespace Enemy
 {
     public class AIManager : MonoBehaviour
     {
+        public bool EnemyIsMoving { get; private set; }
+        public bool EnemyIsAttacking { get; private set; }
+        
         [Header("Variables")]
         [SerializeField] private LayerMask playerLayer;
         [SerializeField] private Transform player;
         [SerializeField] private NavMeshAgent agent;
+        [SerializeField] private EnemyBehavior enemyBehavior;
 
         [Header("Attack Stats")]
         [SerializeField] private Transform attackPoint;
         [SerializeField] private float attackSpeed;
         [SerializeField] private float attackRange;
         [SerializeField] private float attackDamage;
+        [SerializeField] private float attackDelay;
         private float lastAttackTime;
 
         [Header("States")]
@@ -29,27 +33,29 @@ namespace Enemy
         private bool playerInVisionRange;
         private bool playerInAttackRange;
 
-        public bool enemyIsMoving { get; private set; }
-        public bool enemyIsAttacking { get; private set; }
 
         [Inject]
-        public void Construct(PlayerBehavior _playerTransform)
+        public void Construct(PlayerBehavior playerTransform)
         {
-            player = _playerTransform.transform;
+            player = playerTransform.transform;
         }
 
         private void Start()
         {
+            WarpAgent();
             agent = gameObject.GetComponent<NavMeshAgent>();
+            enemyBehavior = gameObject.GetComponent<EnemyBehavior>();
         }
 
         private void Update()
         {
-            if (agent.enabled == true)
+            if (agent.enabled != true)
             {
-                CheckPlayerInRange();
-                CheckEnemyState();
+                return;
             }
+            
+            CheckPlayerInRange();
+            CheckEnemyState();
         }
 
         private void CheckEnemyState()
@@ -57,25 +63,33 @@ namespace Enemy
             if (playerInVisionRange && !playerInAttackRange)
             {
                 ChasePlayer();
-                enemyIsMoving = true;
+                EnemyIsMoving = true;
             }
             else
             {
-                enemyIsMoving = false;
+                EnemyIsMoving = false;
             }
 
             if (playerInVisionRange && playerInAttackRange)
             {
-                AttackPlayer();
+                Invoke(nameof(AttackPlayer),attackDelay);
             }
+        }
+
+        //HACK: Disabled NavMeshAgent will appear at the player spawn position, so it will be placed correctly at the NavMesh.
+        public void WarpAgent()
+        {
+            agent.Warp(player.position);
         }
 
         private void CheckPlayerInRange()
         {
-            playerInVisionRange = Physics.CheckSphere(transform.position,
+            var position = transform.position;
+            
+            playerInVisionRange = Physics.CheckSphere(position,
                 enemyVisionRange, playerLayer);
 
-            playerInAttackRange = Physics.CheckSphere(transform.position,
+            playerInAttackRange = Physics.CheckSphere(position,
                 attackRange, playerLayer);
         }
 
@@ -86,18 +100,25 @@ namespace Enemy
 
         private void AttackPlayer()
         {
+            if (!enemyBehavior.IsAlive)
+            {
+                print("Enemy is dead and can't attack");
+                return;
+            }
+            
             agent.SetDestination(transform.position);
-
+            var attackPointPosition = attackPoint.position;
+            
             if (Time.time - lastAttackTime >= 1f / attackSpeed)
             {
-                enemyIsAttacking = true;
+                EnemyIsAttacking = true;
                 lastAttackTime = Time.time;
 
                 //Debug attack speed
-                Debug.DrawRay(attackPoint.position, player.position, Color.blue, 1f);
+                Debug.DrawRay(attackPointPosition, player.position, Color.blue, 1f);
 
                 //Attack implementation
-                Collider[] hitPlayer = Physics.OverlapSphere(attackPoint.position,
+                Collider[] hitPlayer = Physics.OverlapSphere(attackPointPosition,
                     attackRange, playerLayer);
 
                 foreach (Collider playerCollider in hitPlayer)
@@ -108,7 +129,7 @@ namespace Enemy
             }
             else
             {
-                enemyIsAttacking = false;
+                EnemyIsAttacking = false;
             }
         }
 

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="UserContentModel">
+    <attachedFolders />
+    <explicitIncludes />
+    <explicitExcludes>
+      <Path>Assets/AddressableAssetsData</Path>
+      <Path>Assets/Bandits - Pixel Art</Path>
+      <Path>Assets/Materials</Path>
+      <Path>Assets/Plugins</Path>
+      <Path>Assets/Prefabs</Path>
+      <Path>Assets/Resources</Path>
+      <Path>Assets/Scenes</Path>
+      <Path>Assets/Settings</Path>
+      <Path>Assets/Shaders</Path>
+      <Path>Assets/VFX</Path>
+    </explicitExcludes>
+  </component>
+</project>

@@ -1,17 +1,19 @@
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
-//TODO: Add isAlive bool
-//TODO: Add OnBecomeInvisible SetActive false
 namespace Enemy
 {
     public class EnemyBehavior : MonoBehaviour, IEnemy
     {
-        public static bool isAlive { get; private set; } = true;
+        public bool IsAlive { get; private set; } = true;
+        public event Action OnDied;
         
         [SerializeField] private EnemyAnimations enemyAnimations;
-        [SerializeField] private float _hp = 10;
+        [FormerlySerializedAs("_hp")]
+        [SerializeField] private float hp = 10;
         private float maxHp;
+        private AIManager aiManager;
 
         private void Awake()
         {
@@ -20,20 +22,21 @@ namespace Enemy
 
         private void Start()
         {
+            aiManager = GetComponent<AIManager>();
             enemyAnimations.GetComponent<EnemyAnimations>();
         }
 
         private void Update()
         {
+            BilboardEnemySprite();
             Move();
             Attack();
-            BilboardEnemySprite();
         }
 
         public float EnemyHp
         {
-            get => _hp;
-            private set => _hp = value;
+            get => hp;
+            private set => hp = value;
         }
 
         public void Attack()
@@ -49,16 +52,18 @@ namespace Enemy
 
         public void Death()
         {
-            isAlive = false;
+            OnDied?.Invoke();
             
+            IsAlive = false;
             enemyAnimations.PlayDeathAnimation();
-            
-            GetComponent<AIManager>().AgentIsActive(false);
-            Debug.Log("Enemy has been slayed");
+            aiManager.AgentIsActive(false);
+            print("Enemy has been slayed");
         }
-
+        
         public void GetDamage(float damage)
         {
+            if (!IsAlive) return;
+            
             enemyAnimations.PlayOnHitAnimation();
 
             EnemyHp -= damage;
@@ -91,22 +96,24 @@ namespace Enemy
 
         private void OnBecameInvisible()
         {
+            if (IsAlive) return;
+            
             DisableEnemy();
         }
 
         private void DisableEnemy()
         {
-            if (isAlive)
-            {
-                return;
-            }
-
             gameObject.SetActive(false);
         }
 
         private void OnDisable()
         {
             EnemyHp = maxHp;
+        }
+
+        private void OnEnable()
+        {
+            IsAlive = true;
         }
     }
 }

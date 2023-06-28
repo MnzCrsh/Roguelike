@@ -4,8 +4,6 @@ using Application = UnityEngine.Device.Application;
 
 namespace GameSettings
 {
-
-
     public class PerfomanceManager : MonoBehaviour
     {
         private void Awake()

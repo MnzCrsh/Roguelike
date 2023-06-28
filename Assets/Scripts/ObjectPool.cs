@@ -4,6 +4,7 @@ using Zenject;
 
 namespace Pool
 {
+    [RequireComponent(typeof(DiContainer))]
     public class ObjectPool : MonoBehaviour
     {
         #region Singleton
@@ -16,7 +17,8 @@ namespace Pool
 
         #endregion
 
-        private Dictionary<string, Queue<GameObject>> objectPoolDictionary = new ();
+        private readonly Dictionary<string, Queue<GameObject>>
+            objectPoolDictionary = new ();
         
         [Tooltip("List of object pools")]
         [SerializeField] private List<MPool> pools;
@@ -36,7 +38,7 @@ namespace Pool
         {
             foreach (MPool pool in pools)
             {
-                Queue<GameObject> objectPool = new Queue<GameObject>();
+                Queue<GameObject> objectPool = new ();
 
                 CachePoolObjects(pool, objectPool);
                 objectPoolDictionary.Add(pool.poolTag, objectPool);
@@ -45,7 +47,7 @@ namespace Pool
         }
 
         /// <summary>
-        /// Instantiate GO then disable them
+        /// Instantiate GOs then disable them
         /// </summary>
         /// <param name="pool"></param>
         /// <param name="objectPool"></param>
@@ -79,7 +81,7 @@ namespace Pool
             objectToSpawn.SetActive(true);
             objectToSpawn.transform.position = position;
             objectToSpawn.transform.rotation = rotation;
-            
+
             objectPoolDictionary[poolTag].Enqueue(objectToSpawn);
 
             return objectToSpawn;

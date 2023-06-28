@@ -1,9 +1,6 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-namespace ThirdPersonCamera
+namespace Player
 {
     public class ThirdPersonCamera : MonoBehaviour
     {
@@ -31,7 +28,10 @@ namespace ThirdPersonCamera
             CameraCollisionCheck();
         }
 
-        //Get Camera direction
+        /// <summary>
+        /// Get camera direction
+        /// </summary>
+        /// <returns></returns>
         private Vector3 GetDir()
         {
             return new Vector3(0f, 0f, -distance);
@@ -44,16 +44,22 @@ namespace ThirdPersonCamera
             camTransform.position = lookAt.position + rotation * GetDir();
         }
 
-        //If Ray touching the wall, then Camera will zoom to the player
+        //Zooms camera on collision with the wall
         private void CameraCollisionCheck()
         {
-            Vector3 desiredCameraPosition = transform.TransformPoint(GetDir() * camDistanceMinMax.y);
+            Vector3 desiredCameraPosition = transform.TransformPoint
+                (GetDir() * camDistanceMinMax.y);
+            
             RaycastHit hit;
      
-            Debug.DrawLine(lookAt.transform.position, desiredCameraPosition, Color.magenta);
-            if (Physics.Linecast(lookAt.transform.position, desiredCameraPosition, out hit, walls))
+            Debug.DrawLine(lookAt.transform.position,
+                desiredCameraPosition, Color.magenta);
+            
+            if (Physics.Linecast(lookAt.transform.position,
+                    desiredCameraPosition, out hit, walls))
             {
-                distance = Mathf.Clamp(hit.distance * 0.9f, camDistanceMinMax.x, camDistanceMinMax.y);
+                distance = Mathf.Clamp(hit.distance * 0.9f,
+                    camDistanceMinMax.x, camDistanceMinMax.y);
             }
             else
             {

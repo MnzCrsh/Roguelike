@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 //TODO: Move player stats to SO
 //TODO: Change GO to Construct or field injection
@@ -10,13 +11,15 @@ namespace Player
         [SerializeField] private PlayerCombat combat;
         [SerializeField] private PlayerController controller;
         [SerializeField] private PlayerAnimations playerAnimation;
-        [SerializeField] private float _hp;
-        [SerializeField] private int _armor;
+        [FormerlySerializedAs("_hp")]
+        [SerializeField] private float hp;
+        [FormerlySerializedAs("_armor")]
+        [SerializeField] private int armor;
 
-        public float PlayerHP
+        public float PlayerHp
         {
-            get => _hp;
-            set => _hp = value;
+            get => hp;
+            private set => hp = value;
         }
 
         void Update()
@@ -40,13 +43,17 @@ namespace Player
         {
             playerAnimation.PlayOnHitAnimation();
 
-            PlayerHP -= damage % _armor;
+            PlayerHp -= damage % armor;
 
-            Debug.Log("Incoming damage: " + damage 
-                + " " + "Current HP: " + PlayerHP
-                + "Damage recieved: " + " " + (damage % _armor));
+            #region Debug incoming damage
 
-            if (PlayerHP <= 0)
+            Debug.Log("Incoming damage: " + damage + " " 
+                      + "Current HP: " + PlayerHp 
+                      + "Damage recieved: " + " " + (damage % armor));
+            
+            #endregion
+
+            if (PlayerHp <= 0)
             {
                 Death();
             }

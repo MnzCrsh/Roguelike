@@ -3,7 +3,7 @@ namespace Room
 {
     public class GridCell
     {
-        public bool _visitedCell = false;
-        public bool[] _cellStatus = new bool[4];
+        public bool VisitedCell = false;
+        public readonly bool[] CellStatus = new bool[4];
     }
 }

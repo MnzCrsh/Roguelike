@@ -5,12 +5,13 @@ namespace Player
 {
     public class PlayerCombat : MonoBehaviour
     {
-        [HideInInspector]public bool playerIsAttacking = false;
+        public bool PlayerIsAttacking { get; private set; }
 
         [Header("Variables")]
         [SerializeField] private Transform attackPoint;
         [SerializeField] private LayerMask enemyLayers;
 
+        [Space (5)]
         [Header("Player attack stats")]
         [SerializeField] private float range = 0.5f;
         [SerializeField] private float playerDamage = 5;
@@ -24,13 +25,14 @@ namespace Player
             {
                 if (Input.GetMouseButtonDown(0))
                 {
-                    playerIsAttacking = true;
-
+                    PlayerIsAttacking = true;
+                    var point = attackPoint.position;
+                    
                     //Debug player attack and attack speed
-                    Debug.DrawRay(attackPoint.position, attackPoint.position * 2, Color.red);
+                    Debug.DrawRay(point, point * 2, Color.red);
 
                     //Casts attack sphere AKA Player attack
-                    Collider[] hitEnemies = Physics.OverlapSphere(attackPoint.position, range, enemyLayers);
+                    Collider[] hitEnemies = Physics.OverlapSphere(point, range, enemyLayers);
 
                     //Deals damage to the every enemy in attack range
                     foreach (Collider enemy in hitEnemies)
@@ -46,7 +48,7 @@ namespace Player
             }
             else
             {
-                playerIsAttacking = false;
+                PlayerIsAttacking = false;
             }
         }
 

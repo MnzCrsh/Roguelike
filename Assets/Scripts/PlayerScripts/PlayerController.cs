@@ -1,29 +1,39 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
+//TODO: Change current controller to axis
 namespace Player
 {
     [RequireComponent(typeof(Rigidbody))]
     public class PlayerController : MonoBehaviour
     {
-        public bool playerIsMoving { get; private set; }
+        public bool PlayerIsMoving { get; private set; }
 
-        [SerializeField] private float _playerSpeed;
-        private Rigidbody _rb;
+        [FormerlySerializedAs("_playerSpeed")] 
+        [SerializeField] private float playerSpeed;
+        private Rigidbody rb;
+        private Camera mainCamera;
+        private bool ismainCameraNotNull;
 
         public float PlayerSpeed
         {
-            get => _playerSpeed;
-            set => _playerSpeed = value;
+            get => playerSpeed;
+            private set => playerSpeed = value;
         }
 
         private void Start()
         {
-            _rb = GetComponent<Rigidbody>();
+            ismainCameraNotNull = mainCamera != null;
+            mainCamera = Camera.main;
+            rb = GetComponent<Rigidbody>();
         }
 
         public void BilboardPlayerSprite()
         {
-            transform.rotation = Quaternion.Euler(0f, Camera.main.transform.rotation.eulerAngles.y, 0f);
+            if (ismainCameraNotNull)
+            {
+                transform.rotation = Quaternion.Euler(0f, mainCamera.transform.rotation.eulerAngles.y, 0f);
+            }
         }
 
         //WASD controller
@@ -32,53 +42,52 @@ namespace Player
                 //Move Forward
                 if (Input.GetKey(KeyCode.W))
                 {
-                    _rb.velocity = new Vector3(0f, 0f, z: PlayerSpeed * Time.fixedDeltaTime);
-                    playerIsMoving = true;
+                    rb.velocity = new Vector3(0f, 0f, z: PlayerSpeed * Time.fixedDeltaTime);
+                    PlayerIsMoving = true;
                 }
 
                 //Move Left
                 else if (Input.GetKey(KeyCode.A))
                 {
-                    _rb.velocity = new Vector3(x: -PlayerSpeed * Time.fixedDeltaTime, 0f, 0f);
-                    playerIsMoving = true;
+                    rb.velocity = new Vector3(x: -PlayerSpeed * Time.fixedDeltaTime, 0f, 0f);
+                    PlayerIsMoving = true;
                 }
 
                 //Move Back
                 else if (Input.GetKey(KeyCode.S))
                 {
-                    _rb.velocity = new Vector3(0f, 0f, z: -PlayerSpeed * Time.fixedDeltaTime);
-                    playerIsMoving = true;
+                    rb.velocity = new Vector3(0f, 0f, z: -PlayerSpeed * Time.fixedDeltaTime);
+                    PlayerIsMoving = true;
                 }
 
                 //Move Right
                 else if (Input.GetKey(KeyCode.D))
                 {
-                    _rb.velocity = new Vector3(x: PlayerSpeed * Time.fixedDeltaTime, 0f, 0f);
-                    playerIsMoving = true;
+                    rb.velocity = new Vector3(x: PlayerSpeed * Time.fixedDeltaTime, 0f, 0f);
+                    PlayerIsMoving = true;
                 }
                 
                 else
                 {
-                    playerIsMoving = false;
+                    PlayerIsMoving = false;
                 }
         }
     
         //TODO: Add new variable for dash power
         //TODO: Add coroutine
-        //TODO: Add method to ICharacter
         //TODO: Add VFX to PlayerAnimations
         public void Dodge()
         {
             if (Input.GetKey(KeyCode.D) && Input.GetKeyDown(KeyCode.Space))
             {
-                _rb.AddForce(x: 20, 0f, 0f, ForceMode.Impulse);
-                Debug.Log("Dash");
+                rb.AddForce(x: 20, 0f, 0f, ForceMode.Impulse);
+                print("Dash right");
             }
 
             if (Input.GetKey(KeyCode.A) && Input.GetKeyDown(KeyCode.Space))
             {
-                _rb.AddForce(x: -20, 0f, 0f, ForceMode.Impulse);
-                Debug.Log("Dash");
+                rb.AddForce(x: -20, 0f, 0f, ForceMode.Impulse);
+                print("Dash left");
             }
         }
     }

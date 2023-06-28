@@ -1,14 +1,14 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Zenject;
 
 //TODO: Change prefabs to addresables
 namespace Room
 {
+    //https://en.wikipedia.org/wiki/Backtracking
     public class RoomSpawner : MonoBehaviour
     {
-        public GameObject spawnPoint;
-
         [Header("Room generation settings")]
         [SerializeField] 
         private RoomSpawnRules[] roomPrefabs;
@@ -33,14 +33,13 @@ namespace Room
 
         private List<GridCell> gridMap;
 
+        [Inject] private DiContainer diContainer;
+        
         private void Start()
         {
             CreateGrid();
         }
-
-        /// <summary>
-        /// Instantiate room prefabs
-        /// </summary>
+        
         private void CreateDungeon()
         {
             for (int i = 0; i < gridSize.x; i++)
@@ -53,45 +52,45 @@ namespace Room
         private void GenerateRooms(int i, int j)
         {
             GridCell currentCell = gridMap[(i + j * gridSize.x)];
-            if (currentCell._visitedCell)
+            
+            if (!currentCell.VisitedCell) return;
+            
+            int randomRoom = -1;
+            List<int> availableRoomsList = new List<int>();
+
+            for (int k = 0; k < roomPrefabs.Length; k++)
             {
-                int randomRoom = -1;
-                List<int> availableRoomsList = new List<int>();
+                int probability = roomPrefabs[k].ProbabilityOfSpawning(i, j);
 
-                for (int k = 0; k < roomPrefabs.Length; k++)
+                if (probability.Equals(2))
                 {
-                    int probability = roomPrefabs[k].ProbabilityOfSpawning(i, j);
-
-                    if (probability.Equals(2))
-                    {
-                        randomRoom = k;
-                        break;
-                    }
-                    else if (probability.Equals(1))
-                    {
-                        availableRoomsList.Add(k);
-                    }
+                    randomRoom = k;
+                    break;
                 }
-
-                if (randomRoom.Equals(-1))
+                else if (probability.Equals(1))
                 {
-                    if (availableRoomsList.Count > 0)
-                    {
-                        randomRoom = availableRoomsList[UnityEngine.Random.Range(0, availableRoomsList.Count)];
-                    }
-                    else
-                    {
-                        randomRoom = standartRoomNumber;
-                    }
+                    availableRoomsList.Add(k);
                 }
-
-                var newRoom = Instantiate(roomPrefabs[randomRoom].room, new Vector3
-                    (i * offset.x, 0, -j * offset.y), Quaternion.identity, transform)
-                    .GetComponent<RoomBehavior>();
-
-                newRoom.UpdateRoom(currentCell._cellStatus);
-                newRoom.name += " " + i + "-" + j;
             }
+
+            if (randomRoom.Equals(-1))
+            {
+                if (availableRoomsList.Count > 0)
+                {
+                    randomRoom = availableRoomsList[UnityEngine.Random.Range(0, availableRoomsList.Count)];
+                }
+                else
+                {
+                    randomRoom = standartRoomNumber;
+                }
+            }
+
+            var newRoom = diContainer.InstantiatePrefab(roomPrefabs[randomRoom].room, new Vector3
+                    (i * offset.x, 0, -j * offset.y), Quaternion.identity, transform)
+                .GetComponent<RoomBehavior>();
+
+            newRoom.UpdateRoom(currentCell.CellStatus);
+            newRoom.name += " " + i + "-" + j;
         }
 
         /// <summary>
@@ -116,7 +115,7 @@ namespace Room
             while (loopCount < roomLimit)
             {
                 loopCount++;
-                gridMap[currentCell]._visitedCell = true;
+                gridMap[currentCell].VisitedCell = true;
 
                 if (currentCell.Equals(gridMap.Count - 1))
                 {
@@ -166,15 +165,15 @@ namespace Room
             //checks if path going up or left
             if (newCell + 1 == (currentCell))
             {
-                gridMap[currentCell]._cellStatus[3] = true;
+                gridMap[currentCell].CellStatus[3] = true;
                 currentCell = newCell;
-                gridMap[currentCell]._cellStatus[2] = true;
+                gridMap[currentCell].CellStatus[2] = true;
             }
             else
             {
-                gridMap[currentCell]._cellStatus[0] = true;
+                gridMap[currentCell].CellStatus[0] = true;
                 currentCell = newCell;
-                gridMap[currentCell]._cellStatus[1] = true;
+                gridMap[currentCell].CellStatus[1] = true;
             }
         }
 
@@ -188,15 +187,15 @@ namespace Room
             //checks if path going down or right
             if (newCell - 1 == (currentCell))
             {
-                gridMap[currentCell]._cellStatus[2] = true;
+                gridMap[currentCell].CellStatus[2] = true;
                 currentCell = newCell;
-                gridMap[currentCell]._cellStatus[3] = true;
+                gridMap[currentCell].CellStatus[3] = true;
             }
             else
             {
-                gridMap[currentCell]._cellStatus[1] = true;
+                gridMap[currentCell].CellStatus[1] = true;
                 currentCell = newCell;
-                gridMap[currentCell]._cellStatus[0] = true;
+                gridMap[currentCell].CellStatus[0] = true;
             }
         }
 
@@ -211,29 +210,28 @@ namespace Room
 
             //Check upper neighbor position
             if (cell - gridSize.x >=0 && 
-                !gridMap [neighborPositionUp]._visitedCell)
+                !gridMap [neighborPositionUp].VisitedCell)
             {
                 neighbors.Add(neighborPositionUp);
             }
 
             //Check down neighbor position
             if (cell + gridSize.x < gridMap.Count && 
-                !gridMap[neighborPositionDown]._visitedCell)
+                !gridMap[neighborPositionDown].VisitedCell)
             {
                 neighbors.Add(neighborPositionDown);
             }
 
             //Check right neighbor position
-            //If dont work, change increment to +1
             if (++cell % gridSize.x != 0 && 
-                !gridMap[neighborPositionRight]._visitedCell)
+                !gridMap[neighborPositionRight].VisitedCell)
             {
                 neighbors.Add(neighborPositionRight);
             }
 
             //Check left neighbor position
             if (cell % gridSize.x != 0 && 
-                !gridMap[neighborPositionLeft]._visitedCell)
+                !gridMap[neighborPositionLeft].VisitedCell)
             {
                 neighbors.Add(neighborPositionLeft);
             }
